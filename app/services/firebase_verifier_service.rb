@@ -1,17 +1,18 @@
-require 'net/http'
 require 'json'
 require 'jwt'
+require 'net/http'
+require 'uri'
 
 class FirebaseVerifierService
   VALID_JWT_PUBLIC_KEYS_RESPONSE_CACHE_KEY = "firebase_jwt_public_keys_cache_key"
   JWT_ALGORITHM = 'RS256'
 
-  def initialize(firebase_project_id)
-    @firebase_project_id = firebase_project_id
+  def initialize(firebase_project_number)
+    @firebase_project_number = firebase_project_number
   end
 
   def decode(id_token, public_key)
-    decoded_token, error = decode_jwt_token(id_token, @firebase_project_id, public_key)
+    decoded_token, error = decode_jwt_token(id_token, @firebase_project_number, public_key)
     raise error if error || decoded_token.nil?
 
     payload = decoded_token[0]
@@ -36,13 +37,13 @@ class FirebaseVerifierService
 
   private
 
-    def decode_jwt_token(firebase_jwt_token, firebase_project_id, public_key)
+    def decode_jwt_token(firebase_jwt_token, firebase_project_number, public_key)
       custom_options = {
         verify_iat: true,
         verify_aud: true,
-        aud: firebase_project_id,
+        aud: firebase_project_number,
         verify_iss: true,
-        iss: "https://securetoken.google.com/#{firebase_project_id}"
+        iss: "https://securetoken.google.com/#{firebase_project_number}"
       }
 
       custom_options[:algorithm] = JWT_ALGORITHM unless public_key.nil?
